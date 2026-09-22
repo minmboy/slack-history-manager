@@ -7,7 +7,7 @@ export const en: Strings = {
   langName: 'English',
 
   app: {
-    title: 'Slack Message Manager',
+    title: 'Slack History Manager',
     badge: 'No server · runs entirely in your browser',
     badgeTip:
       'Your token and message contents never leave this browser. Every request goes straight from this page to slack.com, with no server in between.',
@@ -66,6 +66,34 @@ export const en: Strings = {
     ),
   },
 
+  members: {
+    title: 'Export member contacts',
+    intro:
+      "Saves the workspace member directory (users.list) as CSV or JSON: names, email, phone number and title. Phone and title are filled in only where a member put them on their profile.",
+    privacy: (
+      <>
+        The exported file holds <b>other people's personal details.</b> It is written only to your own disk — use it
+        only for what your company's policy allows, and keep it somewhere safe.
+      </>
+    ),
+    load: 'Load member directory',
+    reload: 'Reload',
+    loading: (count: string) => `Loading… ${count} members`,
+    includeInactive: 'Include deactivated accounts and apps',
+    summary: (total: string, email: string, phone: string) =>
+      `${total} members · ${email} with email · ${phone} with phone`,
+    exportLabel: 'Export contacts',
+    emailScopeMissing: (scope: ReactNode): ReactNode => (
+      <>
+        Every email came back empty. Without the {scope} scope, Slack leaves emails out without an error. Add it to the
+        manifest and reinstall the app.
+      </>
+    ),
+    errMissingScope: (needed: string) => `The member directory needs a scope this token lacks (${needed}).`,
+    errFailed: (code: string) => `Could not load the member directory: ${code}`,
+    errUnreachable: 'The member directory request did not reach Slack.',
+  },
+
   ui: {
     copy: 'Copy',
     copied: 'Copied',
@@ -117,8 +145,8 @@ export const en: Strings = {
     ),
 
     manifest: `display_information:
-  name: My Message Manager
-  description: Manages my own Slack messages
+  name: My History Manager
+  description: Manages my own Slack history
   background_color: "#131110"
 oauth_config:
   scopes:
@@ -128,6 +156,8 @@ oauth_config:
       - im:history
       - users:read
       - chat:write
+      # --- keep to include emails in the member contact export ---
+      - users:read.email
       # --- keep to delete attachments as well ---
       - files:write
       # --- keep these for group DMs and channels, otherwise delete them ---

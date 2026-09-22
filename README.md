@@ -1,12 +1,13 @@
-# Slack Message Manager
+# Slack History Manager
 
-[![Deploy](https://github.com/minmboy/slack-message-manager/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/minmboy/slack-message-manager/actions/workflows/deploy-pages.yml)
+[![Deploy](https://github.com/minmboy/slack-history-manager/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/minmboy/slack-history-manager/actions/workflows/deploy-pages.yml)
 
 Manage your own Slack history: review what you have posted, then delete the messages — and optionally the
-files you attached — that you want gone. **There is no backend.** It builds to static files and talks to
+files you attached — that you want gone. It can also export the workspace member directory, with emails and
+phone numbers, as CSV or JSON. **There is no backend.** It builds to static files and talks to
 Slack directly from your browser.
 
-### → [minmboy.github.io/slack-message-manager](https://minmboy.github.io/slack-message-manager/)
+### → [minmboy.github.io/slack-history-manager](https://minmboy.github.io/slack-history-manager/)
 
 Or run it yourself, which is the stronger option for a tool you hand a token to:
 
@@ -82,6 +83,7 @@ takes a little over half an hour, and the app is built to survive that:
 | Pick conversations | `conversations.list` plus `users.list` (names resolve in the background). Optional start date narrows the scan |
 | Scan | `conversations.history`, then `conversations.replies` for every message with `reply_count > 0`. Keeps only messages where `user` matches your own ID |
 | Review | A checkbox per message, windowed so a scan of any size scrolls normally. Filter by date, keyword, thread, or attachment; select or clear whole conversations. Export the staged list as CSV or JSON — a backup taken before anything is deleted |
+| Export members | Optional, on the picker screen. `users.list` walked to the end, then CSV or JSON: ID, handle, display and real name, email, phone, title, bot / deactivated / guest / admin flags, time zone. Deactivated accounts and apps are left out unless you tick the box |
 | Delete | Type the confirmation word → `chat.delete`, one call per message, then `files.delete` for attachments if you opted in. Progress, per-item failure reasons, and an export carrying the text of every message removed |
 
 **Thread replies are deleted before their roots.** Deleting a root first leaves its replies stranded
@@ -129,8 +131,8 @@ grep -rn "pushState\|replaceState\|location.hash" src/
   none of it reaches GitHub's request logs.
 
 No IndexedDB, no cookies. **Message contents are never persisted by the app** — scan results live in memory
-and disappear on reload. The one way text leaves the browser is an export you click, which writes a file to
-your own disk; the review screen says so next to the button.
+and disappear on reload, and so does a loaded member directory. The one way either leaves the browser is an
+export you click, which writes a file to your own disk; each screen says so next to the button.
 
 **4. The browser enforces all of the above.** The policy is defined once in
 [`vite.config.ts`](vite.config.ts) and applied to the built page two ways — as a `<meta http-equiv>`
@@ -146,10 +148,10 @@ anywhere else.** The browser refuses the connection. Check a live deployment eit
 
 ```bash
 # the meta tag, which every host preserves
-curl -s https://minmboy.github.io/slack-message-manager/ | grep -o 'http-equiv="Content-Security-Policy"[^>]*'
+curl -s https://minmboy.github.io/slack-history-manager/ | grep -o 'http-equiv="Content-Security-Policy"[^>]*'
 
 # the response header, on hosts that can set one (GitHub Pages cannot, so this is empty there)
-curl -sD - -o /dev/null https://minmboy.github.io/slack-message-manager/ | grep -i content-security-policy
+curl -sD - -o /dev/null https://minmboy.github.io/slack-history-manager/ | grep -i content-security-policy
 ```
 
 **5. You can watch it at runtime.** Keep the DevTools Network tab open and confirm that nothing but
@@ -176,6 +178,23 @@ curl -sD - -o /dev/null https://minmboy.github.io/slack-message-manager/ | grep 
 - The token lives in memory, optionally in `sessionStorage`. **Revoke token** calls `auth.revoke`.
 - `invalid_auth`, `token_revoked` and `missing_scope` abort the run; every other per-message failure is
   recorded and the run continues.
+
+## Member contact export
+
+The picker screen has a second panel that exports the workspace member directory. It is separate from the
+cleanup flow and changes nothing in Slack — it only reads `users.list`.
+
+- **Email needs `users:read.email`**, which the manifest above includes. Without it Slack does not fail the
+  call; it just leaves every email out. The panel notices when no member came back with one and says so.
+  If you added the scope to an existing app, reinstall it so the token picks it up.
+- **Phone and title come from the profile.** They are there only where a member filled them in, so a column
+  that is mostly empty is normal. No extra scope is needed.
+- **Guests and admins are flagged, not filtered.** Deactivated accounts and apps (Slackbot included) are
+  excluded by default, because a contact list rarely wants them; a checkbox brings them back.
+- In the CSV, a phone number that starts with `+` gets the same leading `'` as any other formula-like cell,
+  so a spreadsheet shows it as text rather than evaluating it. The JSON carries it as entered.
+- **This is other people's personal data.** The file is written only to your disk, but what you may do with
+  it is up to your company's policy, not this tool.
 
 ## Limits (know these)
 
@@ -259,10 +278,11 @@ links back to them in the meantime.
 ```
 src/lib/slack.ts    CORS-shaped fetch, per-method adaptive rate limiting, 429 retry, cursor pagination
 src/lib/timer.ts    Sleep backed by a Web Worker, so background tabs keep their pace
-src/lib/api.ts      Typed wrappers: auth.test, conversations.list, users.list, users.info, files.delete
+src/lib/api.ts      Typed wrappers: auth.test, conversations.list, users.list (names, and the full member export), users.info, files.delete
 src/lib/scan.ts     Walks history + replies, collects your own messages
 src/lib/deleter.ts  Delete queue: messages (replies before roots, newest first), then files; per-failure classification
-src/lib/export.ts   CSV and JSON for the staged list and the run results; joins message text onto results
+src/lib/export.ts   CSV and JSON for the staged list, the run results and the member directory; joins message text onto results
+src/components/MemberExport.tsx  Loads the member directory on request and offers it as CSV or JSON
 src/components/MessageList.tsx  Windowed list — fixed inline row heights, prefix-sum offsets, binary-searched window
 src/lib/router.ts   Hash subscription and writes; announces its own pushState/replaceState
 src/lib/route.ts    Pure URL <-> view state, plus the clamp that refuses unrestorable routes

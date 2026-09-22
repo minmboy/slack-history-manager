@@ -1,6 +1,6 @@
 /** Typed wrappers over the Slack methods this app needs. */
 import { slackCall, slackPaginate, type CallContext } from './slack'
-import type { Conversation, ConversationKind, Identity, SlackUser } from './types'
+import type { Conversation, ConversationKind, Identity, Member, SlackUser } from './types'
 
 /** Selectable conversation types and the user scopes each one needs. Labels live in the dictionary. */
 export const CONVERSATION_TYPES: { kind: ConversationKind; scopes: string[] }[] = [
@@ -91,7 +91,11 @@ interface RawUser {
   real_name?: string
   deleted?: boolean
   is_bot?: boolean
-  profile?: { display_name?: string; real_name?: string }
+  is_admin?: boolean
+  is_restricted?: boolean
+  is_ultra_restricted?: boolean
+  tz?: string
+  profile?: { display_name?: string; real_name?: string; email?: string; phone?: string; title?: string }
 }
 
 function toUser(raw: RawUser): SlackUser {
@@ -113,6 +117,42 @@ function toUser(raw: RawUser): SlackUser {
 export async function* streamUsers(ctx: CallContext, maxPages = 30): AsyncGenerator<SlackUser[]> {
   const pages = slackPaginate<RawUser>('users.list', 2, { limit: 1000 }, 'members', ctx, maxPages)
   for await (const page of pages) yield page.map(toUser)
+}
+
+function toMember(raw: RawUser): Member {
+  const user = toUser(raw)
+  return {
+    id: raw.id,
+    name: raw.name ?? '',
+    displayName: user.displayName,
+    realName: user.realName,
+    email: raw.profile?.email?.trim() ?? '',
+    phone: raw.profile?.phone?.trim() ?? '',
+    title: raw.profile?.title?.trim() ?? '',
+    // Slackbot is listed as a regular member, not a bot.
+    isBot: user.isBot || raw.id === 'USLACKBOT',
+    isDeleted: user.isDeleted,
+    isGuest: Boolean(raw.is_restricted || raw.is_ultra_restricted),
+    isAdmin: Boolean(raw.is_admin),
+    tz: raw.tz ?? '',
+  }
+}
+
+/**
+ * Walks the whole member directory for export. Unlike `streamUsers`, which only
+ * needs enough pages to name the DMs in the picker, this has no page cap: an
+ * export that silently stopped at 30,000 members would read as complete.
+ *
+ * Slack leaves `profile.email` out, without an error, when the token lacks
+ * `users:read.email` — the caller has to notice the column came back empty.
+ */
+export async function listMembers(ctx: CallContext, onPage?: (total: number) => void): Promise<Member[]> {
+  const out: Member[] = []
+  for await (const page of slackPaginate<RawUser>('users.list', 2, { limit: 1000 }, 'members', ctx)) {
+    for (const raw of page) out.push(toMember(raw))
+    onPage?.(out.length)
+  }
+  return out
 }
 
 /**

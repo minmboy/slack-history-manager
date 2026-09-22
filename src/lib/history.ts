@@ -9,6 +9,7 @@
  *
  * Keyed by workspace and user, so two accounts in one browser never mix.
  */
+import { adoptLegacyKey } from './legacy'
 
 export interface ConversationHistory {
   /** ms epoch of the last completed scan that covered this conversation. */
@@ -25,7 +26,7 @@ export interface ConversationHistory {
 
 export type HistoryMap = Record<string, ConversationHistory>
 
-const KEY = 'slack-message-manager:history'
+const KEY = 'slack-history-manager:history'
 
 interface Stored {
   v: 1
@@ -35,6 +36,7 @@ interface Stored {
 export const accountKey = (identity: { teamId: string; userId: string }) => `${identity.teamId}:${identity.userId}`
 
 function readStored(): Stored {
+  adoptLegacyKey(KEY)
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return { v: 1, accounts: {} }

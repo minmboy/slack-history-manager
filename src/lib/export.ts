@@ -10,7 +10,7 @@
  * already in hand and `keyOf(target) === resultKey(result)`.
  */
 import { keyOf, resultKey } from './format'
-import type { DeleteResult, TargetMessage } from './types'
+import type { DeleteResult, Member, TargetMessage } from './types'
 
 /**
  * Quote every cell: display names and error text can hold commas and quotes.
@@ -57,10 +57,12 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
 export type ExportFormat = 'csv' | 'json'
 
-/** `slack-message-manager-review-20260910T053400.csv` */
-export function exportFilename(kind: 'review' | 'results', format: ExportFormat, now: Date): string {
+/** `slack-history-manager-review-20260910T053400.csv` */
+export type ExportKind = 'review' | 'results' | 'members'
+
+export function exportFilename(kind: ExportKind, format: ExportFormat, now: Date): string {
   const stamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '')
-  return `slack-message-manager-${kind}-${stamp}.${format}`
+  return `slack-history-manager-${kind}-${stamp}.${format}`
 }
 
 const iso = (ms: number) => new Date(ms).toISOString()
@@ -102,7 +104,7 @@ export function reviewExport(
 ): Blob {
   if (format === 'json') {
     const payload = {
-      kind: 'slack-message-manager-review',
+      kind: 'slack-history-manager-review',
       messageCount: staged.length,
       messages: staged.map((target) => ({
         channelId: target.channelId,
@@ -185,7 +187,7 @@ export function resultsExport(
 
   if (format === 'json') {
     const payload = {
-      kind: 'slack-message-manager-results',
+      kind: 'slack-history-manager-results',
       total: results.length,
       results: results.map((result) => {
         const target = lookup(result)
@@ -210,4 +212,50 @@ export function resultsExport(
   }
   const rows = results.map((result) => resultRow(result, lookup(result), labels))
   return new Blob([toCsv(RESULT_HEADER, rows)], { type: 'text/csv;charset=utf-8' })
+}
+
+// ---------------------------------------------------------------- members
+
+const MEMBER_HEADER = [
+  'user_id',
+  'name',
+  'display_name',
+  'real_name',
+  'email',
+  'phone',
+  'title',
+  'is_bot',
+  'is_deleted',
+  'is_guest',
+  'is_admin',
+  'tz',
+]
+
+/**
+ * The member directory. Unlike the other two exports this is not about your own
+ * messages: it is other people's contact details, so the screen that offers it
+ * says so. In the CSV a phone number such as `+82 10-…` starts with a formula
+ * character, so `cell` writes it with a leading `'` and a spreadsheet shows it
+ * as text; the JSON keeps it as entered.
+ */
+export function membersExport(members: Member[], format: ExportFormat): Blob {
+  if (format === 'json') {
+    const payload = { kind: 'slack-history-manager-members', memberCount: members.length, members }
+    return new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
+  }
+  const rows = members.map((member) => [
+    member.id,
+    member.name,
+    member.displayName,
+    member.realName,
+    member.email,
+    member.phone,
+    member.title,
+    bool(member.isBot),
+    bool(member.isDeleted),
+    bool(member.isGuest),
+    bool(member.isAdmin),
+    member.tz,
+  ])
+  return new Blob([toCsv(MEMBER_HEADER, rows)], { type: 'text/csv;charset=utf-8' })
 }

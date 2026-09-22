@@ -1,9 +1,9 @@
 import { useI18n } from '../i18n/context'
-import { downloadBlob, exportFilename, type ExportFormat } from '../lib/export'
+import { downloadBlob, exportFilename, type ExportFormat, type ExportKind } from '../lib/export'
 
 interface Props {
   label: string
-  kind: 'review' | 'results'
+  kind: ExportKind
   /** Builds the file for the chosen format. Called from the click, never earlier. */
   build: (format: ExportFormat) => Blob
   disabled?: boolean

@@ -28,6 +28,28 @@ export interface SlackUser {
   isDeleted: boolean
 }
 
+/**
+ * One entry of the workspace member directory, as exported. Email is present
+ * only with the `users:read.email` scope; phone and title only where the
+ * member filled them in and the workspace lets profiles show them.
+ */
+export interface Member {
+  id: string
+  /** The `@handle`. */
+  name: string
+  displayName: string
+  realName: string
+  email: string
+  phone: string
+  title: string
+  isBot: boolean
+  isDeleted: boolean
+  /** Guest accounts: restricted (multi-channel) or ultra-restricted (single-channel). */
+  isGuest: boolean
+  isAdmin: boolean
+  tz: string
+}
+
 /** A file I uploaded, attached to one of my messages. */
 export interface TargetFile {
   /** Slack file id; the `files.delete` key. */

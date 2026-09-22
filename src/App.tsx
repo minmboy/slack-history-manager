@@ -15,6 +15,7 @@ import type {
 } from './lib/types'
 import { ConfirmModal } from './components/ConfirmModal'
 import { ConversationPicker } from './components/ConversationPicker'
+import { MemberExport } from './components/MemberExport'
 import { ReviewView } from './components/ReviewView'
 import { RunView } from './components/RunView'
 import { ScanView } from './components/ScanView'
@@ -33,7 +34,7 @@ import {
   type HistoryMap,
 } from './lib/history'
 
-const TOKEN_KEY = 'slack-message-manager:token'
+const TOKEN_KEY = 'slack-history-manager:token'
 
 /** `mpdm-alice--bob--carol-1` → `alice, bob, carol` */
 function prettyMpim(name: string): string {
@@ -747,6 +748,7 @@ export default function App() {
           onClearHistory={clearHistoryNow}
         />
       )}
+      {step === 'select' && <MemberExport makeCtx={makeCtx} />}
 
       {step === 'scan' && (
         <ScanView

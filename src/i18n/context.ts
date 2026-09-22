@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
 import { makeFormatters, type Formatters } from '../lib/format'
+import { adoptLegacyKey } from '../lib/legacy'
 import { en } from './en'
 import { ko, type Strings } from './ko'
 
@@ -9,7 +10,7 @@ export const DICTS: Record<Lang, Strings> = { ko, en }
 export const LANGS = Object.keys(DICTS) as Lang[]
 
 /** The only thing this app puts in localStorage. Not sensitive; see README. */
-export const LANG_KEY = 'slack-message-manager:lang'
+export const LANG_KEY = 'slack-history-manager:lang'
 
 export interface I18nValue extends Formatters {
   lang: Lang
@@ -25,6 +26,7 @@ function isLang(value: unknown): value is Lang {
 
 /** Stored choice wins; otherwise follow the browser and fall back to English. */
 export function detectLang(): Lang {
+  adoptLegacyKey(LANG_KEY)
   try {
     const saved = localStorage.getItem(LANG_KEY)
     if (isLang(saved)) return saved

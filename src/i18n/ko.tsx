@@ -14,7 +14,7 @@ export const ko = {
   langName: '한국어',
 
   app: {
-    title: 'Slack 메시지 관리',
+    title: 'Slack 기록 관리',
     badge: '서버 전송 없음 · 브라우저에서만 처리',
     badgeTip:
       '토큰과 메시지 내용이 이 브라우저를 벗어나지 않습니다. 모든 요청은 이 페이지에서 slack.com으로 직접 전송되며, 중간 서버가 없습니다.',
@@ -72,6 +72,33 @@ export const ko = {
     ),
   },
 
+  members: {
+    title: '구성원 연락처 내보내기',
+    intro:
+      '워크스페이스 구성원 목록(users.list)을 이름, 이메일, 전화번호, 직함과 함께 CSV 또는 JSON으로 저장합니다. 전화번호와 직함은 구성원이 프로필에 입력한 경우에만 채워집니다.',
+    privacy: (
+      <>
+        내보낸 파일에는 <b>다른 사람의 개인정보</b>가 들어갑니다. 파일은 내 디스크에만 저장되지만, 회사 정책이 허용하는
+        용도로만 쓰고 안전한 곳에 보관하세요.
+      </>
+    ),
+    load: '구성원 목록 불러오기',
+    reload: '다시 불러오기',
+    loading: (count: string) => `불러오는 중… ${count}명`,
+    includeInactive: '해제된 계정·앱 포함',
+    summary: (total: string, email: string, phone: string) => `${total}명 · 이메일 ${email} · 전화번호 ${phone}`,
+    exportLabel: '연락처 내보내기',
+    emailScopeMissing: (scope: ReactNode): ReactNode => (
+      <>
+        이메일이 모두 비어 있습니다. 토큰에 {scope} 스코프가 없으면 Slack은 오류 없이 이메일을 빼고 보냅니다. 매니페스트에
+        추가하고 앱을 재설치하세요.
+      </>
+    ),
+    errMissingScope: (needed: string) => `구성원 목록에 필요한 스코프가 없습니다 (${needed}).`,
+    errFailed: (code: string) => `구성원 목록을 불러오지 못했습니다: ${code}`,
+    errUnreachable: '구성원 목록 요청이 Slack에 닿지 않았습니다.',
+  },
+
   ui: {
     copy: '복사',
     copied: '복사됨',
@@ -122,8 +149,8 @@ export const ko = {
     ),
 
     manifest: `display_information:
-  name: My Message Manager
-  description: 내 Slack 메시지 관리 도구
+  name: My History Manager
+  description: 내 Slack 기록 관리 도구
   background_color: "#131110"
 oauth_config:
   scopes:
@@ -133,6 +160,8 @@ oauth_config:
       - im:history
       - users:read
       - chat:write
+      # --- 구성원 연락처 내보내기에서 이메일까지 받으려면 유지 ---
+      - users:read.email
       # --- 첨부파일도 함께 삭제하려면 유지 ---
       - files:write
       # --- 그룹 DM / 채널까지 정리하려면 유지, 아니면 삭제 ---
