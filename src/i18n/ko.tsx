@@ -25,8 +25,8 @@ export const ko = {
       connect: '연결',
       select: '대화 선택',
       scan: '스캔',
-      review: '확인',
-      run: '삭제',
+      review: '검토',
+      run: '정리',
     },
     footer: (apiCode: ReactNode): ReactNode => (
       <>
@@ -53,7 +53,7 @@ export const ko = {
       '스캔 결과는 메모리에만 있어서 링크나 새로고침으로 그 화면을 복원할 수 없습니다. 대화를 다시 선택해 주세요.',
     kindsClamped: '링크의 대화 종류 일부를 인식하지 못해 기본값으로 되돌렸습니다.',
     scanFailed: (code: string) => `스캔이 중간에 실패했습니다 (${code}). 대화를 다시 선택해 주세요.`,
-    lastRunNote: '이번 세션의 삭제 결과가 남아 있습니다. 새로 스캔하기 전까지 다시 보거나 내보낼 수 있습니다.',
+    lastRunNote: '이번 세션의 정리 결과가 남아 있습니다. 새로 스캔하기 전까지 다시 보거나 내보낼 수 있습니다.',
     lastRunView: '결과 보기',
     noneFound: '선택한 대화에서 내가 쓴 메시지를 찾지 못했습니다.',
     backToSelect: '대화 다시 선택',
@@ -66,20 +66,18 @@ export const ko = {
     json: 'JSON',
     containsText: (
       <>
-        내보낸 파일에는 <b>메시지 본문이 그대로 들어갑니다.</b> 삭제 전 백업으로 쓰기 좋지만, 그만큼 파일 자체를 안전한
-        곳에 두세요.
+        내보낸 파일에는 <b>메시지 본문이 그대로 들어갑니다.</b> 보관용 백업으로 쓸 수 있으니 안전한 곳에 저장해 두세요.
       </>
     ),
   },
 
   members: {
-    title: '구성원 연락처 내보내기',
+    title: '구성원 목록',
     intro:
-      '워크스페이스 구성원 목록(users.list)을 이름, 이메일, 전화번호, 직함과 함께 CSV 또는 JSON으로 저장합니다. 전화번호와 직함은 구성원이 프로필에 입력한 경우에만 채워집니다.',
+      '워크스페이스 구성원의 이름, 이메일, 전화번호, 직함을 CSV 또는 JSON으로 저장합니다. 전화번호와 직함은 프로필에 입력된 경우에만 들어갑니다.',
     privacy: (
       <>
-        내보낸 파일에는 <b>다른 사람의 개인정보</b>가 들어갑니다. 파일은 내 디스크에만 저장되지만, 회사 정책이 허용하는
-        용도로만 쓰고 안전한 곳에 보관하세요.
+        저장한 파일에는 구성원의 <b>프로필 정보</b>가 담깁니다. 내 컴퓨터에만 저장되니 보관에 신경 써 주세요.
       </>
     ),
     load: '구성원 목록 불러오기',
@@ -87,7 +85,7 @@ export const ko = {
     loading: (count: string) => `불러오는 중… ${count}명`,
     includeInactive: '해제된 계정·앱 포함',
     summary: (total: string, email: string, phone: string) => `${total}명 · 이메일 ${email} · 전화번호 ${phone}`,
-    exportLabel: '연락처 내보내기',
+    exportLabel: '저장',
     emailScopeMissing: (scope: ReactNode): ReactNode => (
       <>
         이메일이 모두 비어 있습니다. 토큰에 {scope} 스코프가 없으면 Slack은 오류 없이 이메일을 빼고 보냅니다. 매니페스트에
@@ -130,7 +128,7 @@ export const ko = {
       </>
     ),
     step1Title: (link: ReactNode): ReactNode => <>{link} → Create New App → From a manifest</>,
-    step1Body: '정리하려는 워크스페이스를 고르고, YAML 탭에 아래 내용을 붙여넣습니다.',
+    step1Body: '사용할 워크스페이스를 고르고, YAML 탭에 아래 내용을 붙여넣습니다.',
     step2Title: 'Install to Workspace',
     step2Body: (
       <>
@@ -160,11 +158,11 @@ oauth_config:
       - im:history
       - users:read
       - chat:write
-      # --- 구성원 연락처 내보내기에서 이메일까지 받으려면 유지 ---
+      # --- 구성원 목록에 이메일도 포함하려면 유지 ---
       - users:read.email
       # --- 첨부파일도 함께 삭제하려면 유지 ---
       - files:write
-      # --- 그룹 DM / 채널까지 정리하려면 유지, 아니면 삭제 ---
+      # --- 그룹 DM / 채널도 다루려면 유지, 아니면 삭제 ---
       - mpim:read
       - mpim:history
       - groups:read
@@ -192,33 +190,33 @@ settings:
     connect: '연결',
     connecting: '확인 중…',
 
-    knowTitle: '알아두어야 할 것',
+    knowTitle: '사용 전 안내',
     irreversible: (
       <>
-        <b>삭제는 되돌릴 수 없습니다.</b> 실행 전에 삭제 대상 메시지를 하나하나 확인할 수 있는 단계를 거칩니다.
+        <b>삭제한 메시지는 되돌릴 수 없습니다.</b> 실행 전에 대상 메시지를 하나씩 검토하는 단계를 거칩니다.
       </>
     ),
     bulletOwnOnly: (
       <>
-        삭제 대상은 <b>내가 쓴 메시지뿐</b>입니다. 상대방 메시지는 목록에도 오르지 않고, User Token 자체가 Slack 수준에서
-        그럴 권한이 없습니다.
+        관리 대상은 <b>내가 쓴 메시지뿐</b>입니다. 다른 사람의 메시지는 목록에 오르지 않으며, User Token에도 그럴 권한이
+        없습니다.
       </>
     ),
     bulletPolicy: (code: ReactNode): ReactNode => (
       <>
-        워크스페이스 관리자가 <b>메시지 삭제를 금지</b>해 뒀다면 개별 메시지가 {code}로 실패할 수 있습니다. 우회하지 않고
-        실패로 기록합니다.
+        워크스페이스에서 <b>메시지 삭제를 제한</b>하고 있다면 해당 메시지는 {code}로 처리되지 않습니다. 이 경우 정책을
+        그대로 따르고 결과에 기록합니다.
       </>
     ),
     bulletRetention: (
       <>
-        이건 <b>Slack에서 메시지를 지우는 것</b>이지, 회사의 export/Discovery 백업에서 지우는 게 아닙니다. 조직 보존
-        정책에 따라 기록은 남아 있을 수 있습니다.
+        Slack 화면에서 직접 삭제하는 것과 <b>같은 동작</b>입니다. 조직의 보존 정책이나 백업에는 기록이 남아 있을 수
+        있습니다.
       </>
     ),
     bulletFiles: (code: ReactNode): ReactNode => (
       <>
-        첨부 <b>파일은 지워지지 않습니다</b> ({code}는 별도 기능).
+        첨부파일은 <b>기본적으로 그대로 둡니다.</b> 원하면 마지막 확인 단계에서 함께 삭제할 수 있습니다 ({code}).
       </>
     ),
   },
@@ -251,7 +249,7 @@ settings:
     emptyLoading: '대화 목록을 불러오고 있습니다…',
     emptyNone: '조건에 맞는 대화가 없습니다.',
     selectedSummary: (count: ReactNode): ReactNode => <>선택 {count}개 대화</>,
-    scanButton: '내 메시지 스캔',
+    scanButton: '내 메시지 불러오기',
   },
 
   scan: {
@@ -261,7 +259,7 @@ settings:
     statSeen: '조회한 메시지',
     statMine: '내 메시지',
     rateLimitNote: (seconds: ReactNode): ReactNode => (
-      <>Slack rate limit에 걸려 {seconds} 대기 중입니다. 그대로 두면 자동으로 이어집니다.</>
+      <>Slack 요청 한도에 도달해 {seconds} 기다리는 중입니다. 그대로 두면 자동으로 이어집니다.</>
     ),
     throttleNote: (
       <>
@@ -281,12 +279,12 @@ settings:
   },
 
   review: {
-    title: '삭제 대상 확인',
+    title: '메시지 검토',
     found: (count: string) => `내 메시지 ${count}개 발견`,
     filtered: (count: string) => ` · 필터 결과 ${count}개`,
     intro: (replyBadge: ReactNode, parentBadge: ReactNode): ReactNode => (
       <>
-        기본적으로 <b>전부 선택</b>돼 있습니다. 남기고 싶은 메시지의 체크를 해제하세요. 스레드 답글은 {replyBadge},
+        기본적으로 <b>전부 선택</b>돼 있습니다. 남겨 둘 메시지는 체크를 해제하세요. 스레드 답글은 {replyBadge},
         스레드 원본은 {parentBadge}으로 표시됩니다.
       </>
     ),
@@ -300,7 +298,7 @@ settings:
     deselectFiltered: '필터 결과 전체 해제',
     selectAll: '전체 선택',
     deselectAll: '전체 해제',
-    listLabel: '삭제 대상 메시지 목록',
+    listLabel: '선택한 메시지 목록',
     listPosition: (from: string, to: string, total: string) => `${from}–${to} / ${total}`,
     emptyNone: '조건에 맞는 메시지가 없습니다.',
     groupSelect: '선택',
@@ -311,7 +309,7 @@ settings:
     noText: '(본문 없음)',
     backToSelect: '대화 다시 선택',
     pending: (count: ReactNode): ReactNode => <>삭제 예정 {count}개</>,
-    proceed: '삭제 진행',
+    proceed: '다음',
   },
 
   confirm: {
@@ -342,25 +340,25 @@ settings:
 
   run: {
     titleDryRunning: '연습 실행 중',
-    titleRunning: '삭제 중',
+    titleRunning: '정리 중',
     titleDryDone: '연습 실행 완료',
     titleDone: '완료',
     titlePaused: '일시정지됨',
     titleDryPaused: '연습 실행 일시정지됨',
     pause: '일시정지',
-    resume: (count: string) => `이어서 삭제 · ${count}개 남음`,
+    resume: (count: string) => `이어서 진행 · ${count}개 남음`,
     eta: (left: string, rate: string) => `남은 시간 ${left} · 분당 ${rate}개`,
     etaMinutes: (count: string) => `약 ${count}분`,
     etaUnderMinute: '1분 미만',
     keepOpen:
-      '탭은 닫지 마세요. 다른 탭으로 옮겨도 계속되지만, 탭을 닫거나 컴퓨터가 잠들면 멈춥니다. 멈추면 같은 대화를 다시 스캔해서 남은 것만 이어서 지울 수 있습니다.',
+      '탭은 닫지 마세요. 다른 탭으로 옮겨도 계속되지만, 탭을 닫거나 컴퓨터가 잠들면 멈춥니다. 멈추더라도 같은 대화를 다시 불러오면 남은 것부터 이어서 진행할 수 있습니다.',
     statTarget: '대상',
     statDeleted: '삭제됨',
     statAlreadyGone: '이미 없음',
     statNotAllowed: '권한 없음',
     statFailed: '실패',
     statFiles: '삭제한 파일',
-    rateLimitNote: (seconds: ReactNode): ReactNode => <>Slack rate limit — {seconds} 대기 후 자동으로 이어집니다.</>,
+    rateLimitNote: (seconds: ReactNode): ReactNode => <>Slack 요청 한도 — {seconds} 후 자동으로 이어집니다.</>,
     seconds: (seconds: number) => `${seconds}초`,
     abortedNote: (code: ReactNode, remaining: string): ReactNode => (
       <>
@@ -370,12 +368,11 @@ settings:
     ),
     notAllowedNote: (count: string, code: ReactNode): ReactNode => (
       <>
-        {count}개는 Slack이 삭제를 거부했습니다 ({code}). 워크스페이스 관리자가 구성원의 메시지 삭제를 제한해 둔 경우가
-        대부분입니다.
+        {count}개는 워크스페이스 정책상 삭제할 수 없는 메시지입니다 ({code}).
       </>
     ),
     retryFailed: (count: string) => `실패한 ${count}개 재시도`,
-    leaveHint: '떠나기 전에 결과를 내보내 두세요. 새로 스캔하면 이 결과는 사라집니다.',
+    leaveHint: '결과는 새로 스캔하면 사라지니, 필요하면 먼저 내보내 두세요.',
     kindMessage: '메시지',
     kindFile: '파일',
     thKind: '종류',

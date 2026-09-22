@@ -233,7 +233,7 @@ const MEMBER_HEADER = [
 
 /**
  * The member directory. Unlike the other two exports this is not about your own
- * messages: it is other people's contact details, so the screen that offers it
+ * messages: it is other members' profile details, so the screen that offers it
  * says so. In the CSV a phone number such as `+82 10-…` starts with a formula
  * character, so `cell` writes it with a leading `'` and a spreadsheet shows it
  * as text; the JSON keeps it as entered.

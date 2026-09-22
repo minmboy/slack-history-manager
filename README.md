@@ -2,9 +2,9 @@
 
 [![Deploy](https://github.com/minmboy/slack-history-manager/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/minmboy/slack-history-manager/actions/workflows/deploy-pages.yml)
 
-Manage your own Slack history: review what you have posted, then delete the messages — and optionally the
-files you attached — that you want gone. It can also export the workspace member directory, with emails and
-phone numbers, as CSV or JSON. **There is no backend.** It builds to static files and talks to
+Manage your own Slack history: look back over what you have posted, keep an archive copy as CSV or JSON, and
+tidy up the messages — and optionally the files you attached — you no longer need. It can also save the
+workspace member directory, with emails and phone numbers. **There is no backend.** It builds to static files and talks to
 Slack directly from your browser.
 
 ### → [minmboy.github.io/slack-history-manager](https://minmboy.github.io/slack-history-manager/)
@@ -83,7 +83,7 @@ takes a little over half an hour, and the app is built to survive that:
 | Pick conversations | `conversations.list` plus `users.list` (names resolve in the background). Optional start date narrows the scan |
 | Scan | `conversations.history`, then `conversations.replies` for every message with `reply_count > 0`. Keeps only messages where `user` matches your own ID |
 | Review | A checkbox per message, windowed so a scan of any size scrolls normally. Filter by date, keyword, thread, or attachment; select or clear whole conversations. Export the staged list as CSV or JSON — a backup taken before anything is deleted |
-| Export members | Optional, on the picker screen. `users.list` walked to the end, then CSV or JSON: ID, handle, display and real name, email, phone, title, bot / deactivated / guest / admin flags, time zone. Deactivated accounts and apps are left out unless you tick the box |
+| Member directory | Optional, on the picker screen. `users.list` walked to the end, then CSV or JSON: ID, handle, display and real name, email, phone, title, bot / deactivated / guest / admin flags, time zone. Deactivated accounts and apps are left out unless you tick the box |
 | Delete | Type the confirmation word → `chat.delete`, one call per message, then `files.delete` for attachments if you opted in. Progress, per-item failure reasons, and an export carrying the text of every message removed |
 
 **Thread replies are deleted before their roots.** Deleting a root first leaves its replies stranded
@@ -179,10 +179,10 @@ curl -sD - -o /dev/null https://minmboy.github.io/slack-history-manager/ | grep 
 - `invalid_auth`, `token_revoked` and `missing_scope` abort the run; every other per-message failure is
   recorded and the run continues.
 
-## Member contact export
+## Member directory
 
-The picker screen has a second panel that exports the workspace member directory. It is separate from the
-cleanup flow and changes nothing in Slack — it only reads `users.list`.
+The picker screen has a second panel that saves the workspace member directory. It is separate from the
+review-and-delete flow and changes nothing in Slack — it only reads `users.list`.
 
 - **Email needs `users:read.email`**, which the manifest above includes. Without it Slack does not fail the
   call; it just leaves every email out. The panel notices when no member came back with one and says so.
@@ -190,11 +190,10 @@ cleanup flow and changes nothing in Slack — it only reads `users.list`.
 - **Phone and title come from the profile.** They are there only where a member filled them in, so a column
   that is mostly empty is normal. No extra scope is needed.
 - **Guests and admins are flagged, not filtered.** Deactivated accounts and apps (Slackbot included) are
-  excluded by default, because a contact list rarely wants them; a checkbox brings them back.
+  excluded by default, because a member list rarely wants them; a checkbox brings them back.
 - In the CSV, a phone number that starts with `+` gets the same leading `'` as any other formula-like cell,
   so a spreadsheet shows it as text rather than evaluating it. The JSON carries it as entered.
-- **This is other people's personal data.** The file is written only to your disk, but what you may do with
-  it is up to your company's policy, not this tool.
+- The file holds members' profile details and is written only to your own disk; keep it accordingly.
 
 ## Limits (know these)
 
@@ -216,7 +215,7 @@ cleanup flow and changes nothing in Slack — it only reads `users.list`.
   aligned, the file stays — listed under your Files and reachable by its permalink to anyone who already
   had access. You cannot see which applies to your workspace, which is why the option exists.
 - **Private channels and group DMs you have left are unreachable.** You are no longer a member, so they
-  are neither listed nor readable. Rejoin to clean one up, or accept that those messages stay.
+  are neither listed nor readable. Rejoin one to include it, or accept that those messages stay.
 - Setting a scan start date filters `conversations.history` by *root* timestamp, so replies you wrote
   inside a thread that started before the cutoff are not found. Leave the date empty for a complete
   sweep.
@@ -252,7 +251,7 @@ request to `slack.com` succeeds and a request to any other host is refused. What
 
 **Vercel** — move the directives from `vite.config.ts` into `vercel.json` to get them as headers too.
 
-For a one-time cleanup, not deploying at all and running `npm run dev` locally is the safest option.
+For occasional use, not deploying at all and running `npm run dev` locally is the safest option.
 
 ---
 

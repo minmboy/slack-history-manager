@@ -19,7 +19,7 @@ export const en: Strings = {
       select: 'Pick conversations',
       scan: 'Scan',
       review: 'Review',
-      run: 'Delete',
+      run: 'Apply',
     },
     footer: (apiCode: ReactNode): ReactNode => (
       <>
@@ -60,20 +60,20 @@ export const en: Strings = {
     json: 'JSON',
     containsText: (
       <>
-        The exported file contains <b>your message text, verbatim.</b> That makes it a useful backup to take
-        before deleting — and a file worth keeping somewhere safe.
+        The exported file contains <b>your message text, verbatim.</b> It works as an archive copy — keep it somewhere
+        safe.
       </>
     ),
   },
 
   members: {
-    title: 'Export member contacts',
+    title: 'Member directory',
     intro:
-      "Saves the workspace member directory (users.list) as CSV or JSON: names, email, phone number and title. Phone and title are filled in only where a member put them on their profile.",
+      "Saves the workspace's members — names, email, phone number and title — as CSV or JSON. Phone and title appear only where they are on a member's profile.",
     privacy: (
       <>
-        The exported file holds <b>other people's personal details.</b> It is written only to your own disk — use it
-        only for what your company's policy allows, and keep it somewhere safe.
+        The saved file holds members' <b>profile details.</b> It is written only to your own computer, so keep it
+        somewhere sensible.
       </>
     ),
     load: 'Load member directory',
@@ -82,7 +82,7 @@ export const en: Strings = {
     includeInactive: 'Include deactivated accounts and apps',
     summary: (total: string, email: string, phone: string) =>
       `${total} members · ${email} with email · ${phone} with phone`,
-    exportLabel: 'Export contacts',
+    exportLabel: 'Save',
     emailScopeMissing: (scope: ReactNode): ReactNode => (
       <>
         Every email came back empty. Without the {scope} scope, Slack leaves emails out without an error. Add it to the
@@ -127,7 +127,7 @@ export const en: Strings = {
       </>
     ),
     step1Title: (link: ReactNode): ReactNode => <>{link} → Create New App → From a manifest</>,
-    step1Body: 'Pick the workspace you want to clean up, then paste the following into the YAML tab.',
+    step1Body: 'Pick the workspace to use, then paste the following into the YAML tab.',
     step2Title: 'Install to Workspace',
     step2Body: (
       <>
@@ -156,11 +156,11 @@ oauth_config:
       - im:history
       - users:read
       - chat:write
-      # --- keep to include emails in the member contact export ---
+      # --- keep to include emails in the member directory ---
       - users:read.email
       # --- keep to delete attachments as well ---
       - files:write
-      # --- keep these for group DMs and channels, otherwise delete them ---
+      # --- keep these to cover group DMs and channels too, otherwise delete them ---
       - mpim:read
       - mpim:history
       - groups:read
@@ -188,33 +188,34 @@ settings:
     connect: 'Connect',
     connecting: 'Checking…',
 
-    knowTitle: 'What you should know',
+    knowTitle: 'Before you start',
     irreversible: (
       <>
-        <b>Deletion cannot be undone.</b> You get a step to review every message individually before anything runs.
+        <b>Deleted messages cannot be restored.</b> You review every message before anything is applied.
       </>
     ),
     bulletOwnOnly: (
       <>
-        Only <b>messages you wrote</b> are ever targeted. Other people's messages never even reach the list, and a user
-        token has no authority to touch them at the Slack level.
+        Only <b>messages you wrote</b> are managed here. Other people's messages never reach the list, and a user token
+        has no authority over them.
       </>
     ),
     bulletPolicy: (code: ReactNode): ReactNode => (
       <>
-        If a workspace admin has <b>disabled message deletion</b>, individual messages may fail with {code}. This tool
-        records the failure rather than working around it.
+        If your workspace <b>restricts message deletion</b>, those messages come back as {code}. The tool follows the
+        policy and notes it in the results.
       </>
     ),
     bulletRetention: (
       <>
-        This <b>deletes messages in Slack</b>. It does not delete them from your company's export or Discovery backups —
-        records may survive under your organization's retention policy.
+        Deleting here is <b>the same action</b> as deleting in Slack itself. Your organization's retention policy or
+        backups may still keep a record.
       </>
     ),
     bulletFiles: (code: ReactNode): ReactNode => (
       <>
-        Attached <b>files are not deleted</b> ({code} is a separate capability).
+        Attached files are <b>left as they are by default.</b> You can opt to delete them too at the final confirmation
+        ({code}).
       </>
     ),
   },
@@ -247,7 +248,7 @@ settings:
     emptyLoading: 'Loading the conversation list…',
     emptyNone: 'No conversations match.',
     selectedSummary: (count: ReactNode): ReactNode => <>{count} conversations selected</>,
-    scanButton: 'Scan my messages',
+    scanButton: 'Load my messages',
   },
 
   scan: {
@@ -257,7 +258,7 @@ settings:
     statSeen: 'Messages read',
     statMine: 'Mine',
     rateLimitNote: (seconds: ReactNode): ReactNode => (
-      <>Slack rate-limited us — waiting {seconds}. Leave this open and it resumes on its own.</>
+      <>Slack's request limit was reached — waiting {seconds}. Leave this open and it resumes on its own.</>
     ),
     throttleNote: (
       <>
@@ -278,12 +279,12 @@ settings:
   },
 
   review: {
-    title: 'Review what gets deleted',
+    title: 'Review messages',
     found: (count: string) => `${count} of your messages found`,
     filtered: (count: string) => ` · ${count} after filters`,
     intro: (replyBadge: ReactNode, parentBadge: ReactNode): ReactNode => (
       <>
-        Everything is <b>selected by default</b>. Uncheck anything you want to keep. Thread replies are marked{' '}
+        Everything is <b>selected by default</b>. Uncheck anything you would like to keep. Thread replies are marked{' '}
         {replyBadge} and thread roots {parentBadge}.
       </>
     ),
@@ -297,7 +298,7 @@ settings:
     deselectFiltered: 'Deselect all filtered',
     selectAll: 'Select all',
     deselectAll: 'Deselect all',
-    listLabel: 'Messages staged for deletion',
+    listLabel: 'Selected messages',
     listPosition: (from: string, to: string, total: string) => `${from}–${to} of ${total}`,
     emptyNone: 'No messages match.',
     groupSelect: 'Select',
@@ -308,7 +309,7 @@ settings:
     noText: '(no text)',
     backToSelect: 'Pick conversations again',
     pending: (count: ReactNode): ReactNode => <>{count} staged for deletion</>,
-    proceed: 'Delete these',
+    proceed: 'Next',
   },
 
   confirm: {
@@ -342,7 +343,7 @@ settings:
 
   run: {
     titleDryRunning: 'Dry run in progress',
-    titleRunning: 'Deleting',
+    titleRunning: 'Applying',
     titleDryDone: 'Dry run complete',
     titleDone: 'Done',
     titlePaused: 'Paused',
@@ -353,7 +354,7 @@ settings:
     etaMinutes: (count: string) => `About ${count} min`,
     etaUnderMinute: 'Under a minute',
     keepOpen:
-      'Keep this tab open. It carries on in the background, but closing the tab or letting the computer sleep stops it. If that happens, scan the same conversations again and only what is left gets deleted.',
+      'Keep this tab open. It carries on in the background, but closing the tab or letting the computer sleep stops it. If that happens, load the same conversations again and it picks up with what is left.',
     statTarget: 'Targets',
     statDeleted: 'Deleted',
     statAlreadyGone: 'Already gone',
@@ -361,7 +362,7 @@ settings:
     statFailed: 'Failed',
     statFiles: 'Files deleted',
     rateLimitNote: (seconds: ReactNode): ReactNode => (
-      <>Slack rate limit — resuming automatically in {seconds}.</>
+      <>Slack's request limit — resuming automatically in {seconds}.</>
     ),
     seconds: (seconds: number) => `${seconds}s`,
     abortedNote: (code: ReactNode, remaining: string): ReactNode => (
@@ -372,12 +373,11 @@ settings:
     ),
     notAllowedNote: (count: string, code: ReactNode): ReactNode => (
       <>
-        Slack refused to delete {count} of them ({code}). Usually this means a workspace admin has restricted members
-        from deleting their own messages.
+        {count} of them cannot be deleted under your workspace's policy ({code}).
       </>
     ),
     retryFailed: (count: string) => `Retry ${count} failed`,
-    leaveHint: 'Export the results before you leave — a new scan replaces them.',
+    leaveHint: 'A new scan replaces these results, so export them first if you need them.',
     kindMessage: 'Message',
     kindFile: 'File',
     thKind: 'Kind',
