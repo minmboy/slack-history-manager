@@ -14,7 +14,7 @@ import type {
   TargetMessage,
 } from './lib/types'
 import { ConfirmModal } from './components/ConfirmModal'
-import { ConversationPicker } from './components/ConversationPicker'
+import { ConversationPicker, type PickerShow, type PickerSort } from './components/ConversationPicker'
 import { MemberExport } from './components/MemberExport'
 import { ReviewView } from './components/ReviewView'
 import { RunView } from './components/RunView'
@@ -58,6 +58,9 @@ export default function App() {
   const [users, setUsers] = useState<Map<string, SlackUser>>(new Map())
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [scanFrom, setScanFrom] = useState('')
+  /** Picker view, kept here so it survives a trip through scan and review. */
+  const [pickerSort, setPickerSort] = useState<PickerSort>('name')
+  const [pickerShow, setPickerShow] = useState<PickerShow>('all')
 
   const [progress, setProgress] = useState<ScanProgress[]>([])
   const [scanErrors, setScanErrors] = useState<{ channelId: string; channelLabel: string; code: string }[]>([])
@@ -746,6 +749,10 @@ export default function App() {
           onScan={() => void startScan()}
           history={history}
           onClearHistory={clearHistoryNow}
+          sort={pickerSort}
+          onSortChange={setPickerSort}
+          show={pickerShow}
+          onShowChange={setPickerShow}
         />
       )}
       {step === 'select' && <MemberExport makeCtx={makeCtx} />}

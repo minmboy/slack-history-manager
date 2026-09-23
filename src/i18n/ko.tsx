@@ -240,6 +240,19 @@ settings:
     historyScanned: (date: string, count: string) => `스캔 ${date} · ${count}개`,
     historySince: (since: string) => ` (${since}~)`,
     historyDeleted: (date: string, count: string) => `삭제 ${date} · 누적 ${count}개`,
+    showLabel: '보기',
+    show: {
+      all: '전체',
+      remaining: '내 메시지 남은 대화',
+      unscanned: '아직 스캔 안 한 대화',
+    },
+    sortLabel: '정렬',
+    sort: {
+      name: '이름순',
+      remaining: '남은 내 메시지 많은 순',
+      recent: '최근 작업순',
+    },
+    historyRemaining: (count: string) => ` · 남은 ${count}개`,
     clearHistory: '이력 지우기',
     clearHistoryTip:
       '이 브라우저에 저장된 대화별 스캔·삭제 이력(대화 ID, 날짜, 개수)을 지웁니다. 메시지 본문과 이름은 처음부터 저장하지 않습니다.',

@@ -239,6 +239,19 @@ settings:
     historyScanned: (date: string, count: string) => `Scanned ${date} · ${count}`,
     historySince: (since: string) => ` (since ${since})`,
     historyDeleted: (date: string, count: string) => `Deleted ${date} · ${count} total`,
+    showLabel: 'Show',
+    show: {
+      all: 'All',
+      remaining: 'With my messages left',
+      unscanned: 'Not scanned yet',
+    },
+    sortLabel: 'Sort',
+    sort: {
+      name: 'By name',
+      remaining: 'Most of my messages left',
+      recent: 'Recently worked on',
+    },
+    historyRemaining: (count: string) => ` · ${count} left`,
     clearHistory: 'Clear history',
     clearHistoryTip:
       'Clears the per-conversation scan and deletion history kept in this browser (conversation IDs, dates and counts). Message text and names are never stored.',

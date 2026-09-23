@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useI18n } from '../i18n/context'
 import { CONVERSATION_TYPES } from '../lib/api'
-import type { HistoryMap } from '../lib/history'
+import { remainingOf, type HistoryMap } from '../lib/history'
 import type { Conversation, ConversationKind } from '../lib/types'
+
+/** How the list is ordered. Everything but `name` reads this browser's history. */
+export type PickerSort = 'name' | 'remaining' | 'recent'
+/** Which rows are shown: all, those with your messages left, or those never scanned. */
+export type PickerShow = 'all' | 'remaining' | 'unscanned'
 
 interface Props {
   conversations: Conversation[]
@@ -18,6 +23,10 @@ interface Props {
   /** What this browser remembers about each conversation: scans and deletions. */
   history: HistoryMap
   onClearHistory: () => void
+  sort: PickerSort
+  onSortChange: (sort: PickerSort) => void
+  show: PickerShow
+  onShowChange: (show: PickerShow) => void
 }
 
 export function ConversationPicker({
@@ -33,21 +42,41 @@ export function ConversationPicker({
   onScan,
   history,
   onClearHistory,
+  sort,
+  onSortChange,
+  show,
+  onShowChange,
 }: Props) {
   const { t, n, formatRelative, formatTime } = useI18n()
   const [query, setQuery] = useState('')
 
+  const hasHistory = Object.keys(history).length > 0
+  // With no history there is nothing to sort or filter by, so fall back quietly.
+  const activeSort = hasHistory ? sort : 'name'
+  const activeShow = hasHistory ? show : 'all'
+
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    const rows = conversations.filter(
-      (item) => !needle || item.label.toLowerCase().includes(needle) || item.id.toLowerCase().includes(needle),
-    )
-    // Unresolved names sink to the bottom so the useful rows are reachable first.
-    return rows.sort((a, b) => {
+    const rows = conversations.filter((item) => {
+      if (needle && !item.label.toLowerCase().includes(needle) && !item.id.toLowerCase().includes(needle)) return false
+      if (activeShow === 'remaining') return (remainingOf(history[item.id]) ?? 0) > 0
+      if (activeShow === 'unscanned') return history[item.id]?.scannedAt === undefined
+      return true
+    })
+    const byName = (a: Conversation, b: Conversation) => {
+      // Unresolved names sink to the bottom so the useful rows are reachable first.
       if (a.labelResolved !== b.labelResolved) return a.labelResolved ? -1 : 1
       return a.label.localeCompare(b.label, t.locale)
-    })
-  }, [conversations, query, t.locale])
+    }
+    // Never-scanned rows go last under the history sorts: -1 is below any count or date.
+    const key = (item: Conversation) =>
+      activeSort === 'remaining'
+        ? (remainingOf(history[item.id]) ?? -1)
+        : activeSort === 'recent'
+          ? Math.max(history[item.id]?.scannedAt ?? -1, history[item.id]?.deletedAt ?? -1)
+          : 0
+    return rows.sort((a, b) => key(b) - key(a) || byName(a, b))
+  }, [conversations, query, t.locale, history, activeSort, activeShow])
 
   function toggle(id: string) {
     const next = new Set(selected)
@@ -62,7 +91,6 @@ export function ConversationPicker({
   }
 
   const allVisibleOn = visible.length > 0 && visible.every((item) => selected.has(item.id))
-  const hasHistory = Object.keys(history).length > 0
 
   return (
     <>
@@ -111,6 +139,42 @@ export function ConversationPicker({
             <span className="hint">{t.picker.rangeHint}</span>
           </div>
 
+          {hasHistory && (
+            <div className="row" style={{ marginTop: 14 }}>
+              <span className="hint" style={{ minWidth: 62 }}>
+                {t.picker.showLabel}
+              </span>
+              <div className="chip-group">
+                {(['all', 'remaining', 'unscanned'] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className="chip"
+                    data-on={activeShow === option}
+                    onClick={() => onShowChange(option)}
+                  >
+                    {t.picker.show[option]}
+                  </button>
+                ))}
+              </div>
+              <div className="spacer" style={{ flex: 1 }} />
+              <label className="hint" style={{ display: 'inline-flex', gap: 8, alignItems: 'center', whiteSpace: 'nowrap' }}>
+                {t.picker.sortLabel}
+                <select
+                  className="select"
+                  value={activeSort}
+                  onChange={(event) => onSortChange(event.target.value as PickerSort)}
+                >
+                  {(['name', 'remaining', 'recent'] as const).map((option) => (
+                    <option key={option} value={option}>
+                      {t.picker.sort[option]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+
           {kinds.some((kind) => kind !== 'im') && (
             <p className="note warn" style={{ marginTop: 14, marginBottom: 0 }}>
               {t.picker.nonDmWarning(<code className="inline">missing_scope</code>)}
@@ -153,6 +217,7 @@ export function ConversationPicker({
           )}
           {visible.map((item) => {
             const record = history[item.id]
+            const remaining = remainingOf(record)
             return (
               <label
                 className="list-row"
@@ -171,6 +236,7 @@ export function ConversationPicker({
                       <span title={formatTime(record.scannedAt)}>
                         {t.picker.historyScanned(formatRelative(record.scannedAt), n(record.found ?? 0))}
                         {record.since ? t.picker.historySince(record.since) : ''}
+                        {remaining !== undefined && remaining !== (record.found ?? 0) && t.picker.historyRemaining(n(remaining))}
                       </span>
                     )}
                     {record.deletedAt !== undefined && (

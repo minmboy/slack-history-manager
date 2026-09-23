@@ -22,6 +22,8 @@ export interface ConversationHistory {
   deletedAt?: number
   /** Messages deleted here by this tool, summed across runs. */
   deleted?: number
+  /** Messages deleted here since the last scan, so `found` can be read as what is left. */
+  deletedSinceScan?: number
 }
 
 export type HistoryMap = Record<string, ConversationHistory>
@@ -79,7 +81,7 @@ export function clearHistory(account: string): void {
 export function recordScan(map: HistoryMap, found: Record<string, number>, since: string, at: number): HistoryMap {
   const next: HistoryMap = { ...map }
   for (const [id, count] of Object.entries(found)) {
-    next[id] = { ...next[id], scannedAt: at, found: count, since: since || undefined }
+    next[id] = { ...next[id], scannedAt: at, found: count, since: since || undefined, deletedSinceScan: 0 }
   }
   return next
 }
@@ -90,7 +92,26 @@ export function recordDeletions(map: HistoryMap, deleted: Record<string, number>
   for (const [id, count] of Object.entries(deleted)) {
     if (count <= 0) continue
     const prev = next[id] ?? {}
-    next[id] = { ...prev, deletedAt: at, deleted: (prev.deleted ?? 0) + count }
+    next[id] = {
+      ...prev,
+      deletedAt: at,
+      deleted: (prev.deleted ?? 0) + count,
+      deletedSinceScan: (prev.deletedSinceScan ?? 0) + count,
+    }
   }
   return next
+}
+
+/**
+ * Your messages the last scan found, less what was deleted since. Undefined
+ * for a conversation never scanned. A record written before `deletedSinceScan`
+ * existed falls back to the running total when a run came after the scan,
+ * which can only undercount what is left.
+ */
+export function remainingOf(record: ConversationHistory | undefined): number | undefined {
+  if (record?.scannedAt === undefined) return undefined
+  const since =
+    record.deletedSinceScan ??
+    (record.deletedAt !== undefined && record.deletedAt > record.scannedAt ? (record.deleted ?? 0) : 0)
+  return Math.max(0, (record.found ?? 0) - since)
 }
