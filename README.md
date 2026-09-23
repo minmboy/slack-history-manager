@@ -2,10 +2,12 @@
 
 [![Deploy](https://github.com/minmboy/slack-history-manager/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/minmboy/slack-history-manager/actions/workflows/deploy-pages.yml)
 
-Manage your own Slack history: look back over what you have posted, keep an archive copy as CSV or JSON, and
-tidy up the messages — and optionally the files you attached — you no longer need. It can also save the
-workspace member directory, with emails and phone numbers. **There is no backend.** It builds to static files and talks to
-Slack directly from your browser.
+A browser-based manager for your own Slack history. Look back over what you have posted, keep an archive copy
+as CSV or JSON, and tidy up the messages — and, if you choose, the files you attached — that you no longer need.
+It also saves the workspace member directory.
+
+**There is no backend.** It builds to static files and talks to Slack directly from your browser, so your token
+and your messages stay on your machine.
 
 ### → [minmboy.github.io/slack-history-manager](https://minmboy.github.io/slack-history-manager/)
 
@@ -80,14 +82,32 @@ takes a little over half an hour, and the app is built to survive that:
 | Step | What happens |
 | --- | --- |
 | Connect | Copy the app manifest → create and install the app → paste the `xoxp-` User Token → `auth.test` |
-| Pick conversations | `conversations.list` plus `users.list` (names resolve in the background). Optional start date narrows the scan |
+| Pick conversations | `conversations.list` plus `users.list` (names resolve in the background). Optional start date narrows the scan. With history from earlier sessions, sort and filter by what is left — see [Picking up where you left off](#picking-up-where-you-left-off) |
 | Scan | `conversations.history`, then `conversations.replies` for every message with `reply_count > 0`. Keeps only messages where `user` matches your own ID |
-| Review | A checkbox per message, windowed so a scan of any size scrolls normally. Filter by date, keyword, thread, or attachment; select or clear whole conversations. Export the staged list as CSV or JSON — a backup taken before anything is deleted |
-| Member directory | Optional, on the picker screen. `users.list` walked to the end, then CSV or JSON: ID, handle, display and real name, email, phone, title, bot / deactivated / guest / admin flags, time zone. Deactivated accounts and apps are left out unless you tick the box |
-| Delete | Type the confirmation word → `chat.delete`, one call per message, then `files.delete` for attachments if you opted in. Progress, per-item failure reasons, and an export carrying the text of every message removed |
+| Review | A checkbox per message, windowed so a scan of any size scrolls normally. Filter by date, keyword, thread, or attachment; select or clear whole conversations. Export the selection as CSV or JSON to keep an archive copy |
+| Apply | Type the confirmation word → `chat.delete`, one call per message, then `files.delete` for attachments if you opted in. Progress, per-item results, and an export carrying the text of every message removed |
+| Member directory | Optional, on the picker screen. `users.list` walked to the end, then CSV or JSON: ID, handle, display and real name, email, phone, title, bot / deactivated / guest / admin flags, time zone |
 
 **Thread replies are deleted before their roots.** Deleting a root first leaves its replies stranded
 under a "message deleted" placeholder.
+
+---
+
+## Picking up where you left off
+
+A large history rarely gets done in one sitting, so the picker remembers — in this browser only — what each
+conversation looked like the last time you worked on it: when it was scanned, how many of your messages that
+scan found, and how many have been deleted since. From that it shows **how many of your messages are left**
+beside each conversation, and lets you work from it:
+
+- **Show** — all conversations, only those with your messages left, or only those you have not scanned yet.
+- **Sort** — by name, by most of your messages left, or by most recently worked on.
+- **Select all visible** then picks exactly what the filter shows, so "every conversation that still has my
+  messages" is two clicks.
+
+The count is what the last scan saw, less what this tool deleted since. Messages you posted or removed
+elsewhere after that scan are not reflected until you scan again — which is also the way to get an exact
+figure. The view controls appear once there is history to sort by.
 
 ---
 
@@ -109,7 +129,7 @@ grep -rn "fetch(\|XMLHttpRequest\|WebSocket\|sendBeacon" src/
 One hit: `fetch(API_BASE + method, ...)` in [`src/lib/slack.ts`](src/lib/slack.ts). `API_BASE` is
 pinned to `https://slack.com/api/` at the top of the same file.
 
-**3. Storage is limited to three keys.**
+**3. Storage is limited to three keys, plus the URL.**
 
 ```bash
 grep -rn "localStorage\|sessionStorage\|indexedDB\|document.cookie" src/
@@ -121,13 +141,12 @@ grep -rn "pushState\|replaceState\|location.hash" src/
 - `localStorage` in [`src/i18n/`](src/i18n/) holds the language choice — `ko` or `en`, nothing else.
 - `localStorage` in [`src/lib/history.ts`](src/lib/history.ts) holds the history the picker shows beside each
   conversation: per workspace and user, a conversation's ID, when it was last scanned and how many of your
-  messages that found, and when messages were last deleted from it and how many in total. No names and no
-  message text. **Clear history** in the picker removes it.
+  messages that found, and when messages were last deleted from it and how many — in total and since that
+  scan. No names and no message text. **Clear history** in the picker removes it.
 - The remaining hits are the checkbox label in the translation files.
-
 - The URL is the fourth surface, and it is deliberately thin: the hash carries the current step and the
   conversation *types* you ticked, nothing else. Never the token, never message text, never which
-  conversations you selected, never your review filters. A fragment is not sent to the server either, so
+  conversations you selected, never your review filters or picker view. A fragment is not sent to the server either, so
   none of it reaches GitHub's request logs.
 
 No IndexedDB, no cookies. **Message contents are never persisted by the app** — scan results live in memory
@@ -162,7 +181,7 @@ curl -sD - -o /dev/null https://minmboy.github.io/slack-history-manager/ | grep 
 
 ---
 
-## Safety rails
+## Built-in safeguards
 
 - Only messages where `message.user` equals the `user_id` from `auth.test` are ever collected.
   `chat.delete` is the final authority on what may actually be removed.
@@ -172,7 +191,7 @@ curl -sD - -o /dev/null https://minmboy.github.io/slack-history-manager/ | grep 
   as already gone, so nothing is deleted twice.
 - **File deletion is off by default.** It runs as a second phase, after the messages, and only when you
   tick the box — with the "removes it everywhere it was shared" warning next to it.
-- The delete button stays disabled until you type the confirmation word.
+- The final button stays disabled until you type the confirmation word.
 - CSV cells that begin with `=`, `+`, `-`, `@` or a control character get a leading `'`, so a spreadsheet
   shows a message such as `=HYPERLINK(…)` instead of evaluating it. JSON exports carry text byte-for-byte.
 - The token lives in memory, optionally in `sessionStorage`. **Revoke token** calls `auth.revoke`.
@@ -182,7 +201,7 @@ curl -sD - -o /dev/null https://minmboy.github.io/slack-history-manager/ | grep 
 ## Member directory
 
 The picker screen has a second panel that saves the workspace member directory. It is separate from the
-review-and-delete flow and changes nothing in Slack — it only reads `users.list`.
+message flow and changes nothing in Slack — it only reads `users.list`.
 
 - **Email needs `users:read.email`**, which the manifest above includes. Without it Slack does not fail the
   call; it just leaves every email out. The panel notices when no member came back with one and says so.
@@ -190,18 +209,19 @@ review-and-delete flow and changes nothing in Slack — it only reads `users.lis
 - **Phone and title come from the profile.** They are there only where a member filled them in, so a column
   that is mostly empty is normal. No extra scope is needed.
 - **Guests and admins are flagged, not filtered.** Deactivated accounts and apps (Slackbot included) are
-  excluded by default, because a member list rarely wants them; a checkbox brings them back.
+  left out by default; a checkbox brings them back.
 - In the CSV, a phone number that starts with `+` gets the same leading `'` as any other formula-like cell,
   so a spreadsheet shows it as text rather than evaluating it. The JSON carries it as entered.
 - The file holds members' profile details and is written only to your own disk; keep it accordingly.
 
-## Limits (know these)
+## Good to know
 
-- **Deletion cannot be undone.**
-- If a workspace admin has disabled message deletion, calls fail with `cant_delete_message`.
-  This tool records that rather than working around it.
-- This is the same action as deleting in the Slack UI. Records **may survive in your company's export,
-  Discovery, or retention backups.**
+- **Deleted messages cannot be restored.** Export an archive copy from the review screen first if you might
+  want them later.
+- If your workspace restricts message deletion, those messages come back as `cant_delete_message`. The tool
+  follows the policy and notes it in the results.
+- Deleting here is the same action as deleting in Slack itself. Your organization's retention policy or
+  backups **may still keep a record.**
 - **Attachments are opt-in, and deleting one is wider than it looks.** `chat.delete` only removes the
   message; the file is a separate object, so the run calls `files.delete` as a second phase and only if
   you tick the box on the confirm screen. **A file does not belong to a conversation** — deleting it
@@ -214,11 +234,11 @@ review-and-delete flow and changes nothing in Slack — it only reads `users.lis
   which files with no shares get a 30-day grace period and are then permanently deleted. Where it is not
   aligned, the file stays — listed under your Files and reachable by its permalink to anyone who already
   had access. You cannot see which applies to your workspace, which is why the option exists.
-- **Private channels and group DMs you have left are unreachable.** You are no longer a member, so they
-  are neither listed nor readable. Rejoin one to include it, or accept that those messages stay.
+- **Private channels and group DMs you are no longer in are out of reach.** They are neither listed nor
+  readable. Rejoin one to include it.
 - Setting a scan start date filters `conversations.history` by *root* timestamp, so replies you wrote
   inside a thread that started before the cutoff are not found. Leave the date empty for a complete
-  sweep.
+  scan.
 - You cannot delete anyone else's messages. Deleting your own thread root leaves other people's
   replies in place.
 
@@ -264,7 +284,7 @@ Hash routing rather than the History API, for the same reason the CSP is a meta 
 GitHub Pages subpath with no rewrite rules, so `/review` would 404 on refresh.
 
 Because scan results are memory-only, some routes cannot be restored. Opening `#/review` cold does not show
-an empty list implying there is nothing to delete — it drops you back to the picker and says why. A delete
+an empty list implying there is nothing there — it drops you back to the picker and says why. A delete
 run pins the route while it is in flight; navigating away cannot orphan it. Once a real run has started,
 Back does not reopen its review list — those messages are gone, and confirming the same list again would
 overwrite the record of the run — so it leads out to the conversation picker instead. A dry run deletes
@@ -279,6 +299,8 @@ src/lib/slack.ts    CORS-shaped fetch, per-method adaptive rate limiting, 429 re
 src/lib/timer.ts    Sleep backed by a Web Worker, so background tabs keep their pace
 src/lib/api.ts      Typed wrappers: auth.test, conversations.list, users.list (names, and the full member export), users.info, files.delete
 src/lib/scan.ts     Walks history + replies, collects your own messages
+src/lib/history.ts  Per-conversation scan and deletion history, and the "left" count the picker sorts by
+src/components/ConversationPicker.tsx  Conversation list with history-driven show/sort
 src/lib/deleter.ts  Delete queue: messages (replies before roots, newest first), then files; per-failure classification
 src/lib/export.ts   CSV and JSON for the staged list, the run results and the member directory; joins message text onto results
 src/components/MemberExport.tsx  Loads the member directory on request and offers it as CSV or JSON
